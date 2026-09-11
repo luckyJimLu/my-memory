@@ -4,6 +4,7 @@
 
 - [统一设计基线：ModemLog、CHR双Socket与MCU本地抓包](diagnostics-unified-design.md)
 - [C++整体架构与交互契约](cpp-architecture-and-interactions.md)
+- [阻塞场景下的并发环形缓冲区设计：从 SPSC 到 MPMC](concurrent-ring-buffer-spsc-mpmc-blocking-design.md)
 - [完整Mermaid流程图](modem-complete-mermaid-flows.md)
 
 当前约束：ModemLog独立Socket、CHR独立Socket；TCPDump在MCU侧lwIP收发路径只读镜像，不占第三个核间Socket。抓包采用私有静态快照池，不能长期占有正常网络pbuf；过载只丢抓包副本。建议一个Socket Reactor加一个Storage Owner，复用现有lwIP和驱动上下文。
@@ -24,5 +25,7 @@
 ## 设计演进
 
 本次统一更新明确了本地抓包位置，重整两路Socket与Storage职责，重写流程图并标记历史方案；补充C++静态组合、类与任务映射、跨线程控制、缓冲所有权和显式停机协议。源码依据来自上游lwIP、FreeRTOS、FatFs、libpcap、PCAP格式资料与C++语言文档；详见各文档脚注和源码指纹。
+
+新增并发环形缓冲区设计基线：明确 SPSC/MPSC/SPMC/MPMC 的适用边界；针对线程阻塞和 overcommitted 场景，引入 per-slot sequence、semaphore/futex 等候层、reservation-hole 约束、RTS/HTS 参考，并给出 Modem/RIL 中“单 TX/RX I/O owner + MPSC/Dispatcher/SPSC”的推荐落地架构。
 
 后续实施先确认STM32型号、lwIP版本、总RAM、WAN峰值pps、SD最坏停顿和CHR可靠性要求。
